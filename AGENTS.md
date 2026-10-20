@@ -65,3 +65,16 @@ stop and ask instead of working around it.
   link between Kaggle rows and seed users changes; update it on purpose.
 - Do not name a subpackage after a library it uses (a local `kaggle/` hid the
   `kaggle` library before).
+
+## Where to read more
+
+Read these before changing the design, not to work on the code:
+
+- Architecture overview: https://securepay-riwi.github.io/SecurePay/docs/architecture/overview
+- Decisions (ADRs): https://securepay-riwi.github.io/SecurePay/docs/architecture/decisions
+- Team decisions: https://securepay-riwi.github.io/SecurePay/docs/architecture/team-decisions
+- Open questions: https://securepay-riwi.github.io/SecurePay/docs/architecture/open-questions
+- Data flow: https://securepay-riwi.github.io/SecurePay/docs/architecture/data-flow
+- Logbook: https://securepay-riwi.github.io/SecurePay/docs/logbook
+- This component: https://securepay-riwi.github.io/SecurePay/docs/components/seed
+- Kaggle ETL: https://securepay-riwi.github.io/SecurePay/docs/components/kaggle-datasets
