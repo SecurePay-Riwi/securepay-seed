@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 
-from db.datasets.config import (
+from securepay_seed.kaggle_etl.config import (
     CATEGORIA_FRAUDTEST,
     TIPO_PAYSIM,
     nuevo_rng,

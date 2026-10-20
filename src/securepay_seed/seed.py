@@ -3,19 +3,19 @@ import os
 
 from sqlalchemy import text
 
-from db.seed.config import (
+from securepay_seed.config import (
     MODE,
     VOLUMES,
     DEFECT_PERCENTAGE,
 )
-from shared.db import get_session, engine
-from shared.models import Base
-from db.seed.tables.users import generar_usuarios
-from db.seed.tables.accounts import generar_cuentas
-from db.seed.tables.devices import generar_dispositivos
-from db.seed.tables.merchants import generar_comercios
-from db.seed.tables.restricted_lists import generar_listas
-from db.seed.export_lista import exportar_lista
+from securepay_shared.db import get_session, engine
+from securepay_shared.models import Base
+from securepay_seed.tables.users import generar_usuarios
+from securepay_seed.tables.accounts import generar_cuentas
+from securepay_seed.tables.devices import generar_dispositivos
+from securepay_seed.tables.merchants import generar_comercios
+from securepay_seed.tables.restricted_lists import generar_listas
+from securepay_seed.export_lista import exportar_lista
 
 
 def reset_tablas():

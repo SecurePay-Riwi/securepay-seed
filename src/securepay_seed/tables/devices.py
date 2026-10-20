@@ -5,9 +5,9 @@ from datetime import timedelta
 from faker import Faker
 from sqlalchemy.dialects.postgresql import insert
 
-from shared.models import Dispositivo, DispositivoCuenta
-from db.seed.config import FECHA_REFERENCIA, PATRONES_COMPARTIDOS
-from db.seed.fechas import fecha_hora_entre
+from securepay_shared.models import Dispositivo, DispositivoCuenta
+from securepay_seed.config import FECHA_REFERENCIA, PATRONES_COMPARTIDOS
+from securepay_seed.fechas import fecha_hora_entre
 
 NAMESPACE = uuid.UUID("12345678-1234-5678-1234-567812345678")
 

@@ -3,9 +3,9 @@
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
-from db.datasets.config import TAMANO_LOTE
-from db.datasets.transform import Dimensiones
-from shared.models import Comercio, Dispositivo, DispositivoCuenta, Transaccion
+from securepay_seed.kaggle_etl.config import TAMANO_LOTE
+from securepay_seed.kaggle_etl.transform import Dimensiones
+from securepay_shared.models import Comercio, Dispositivo, DispositivoCuenta, Transaccion
 
 
 def cargar_dimensiones(session):

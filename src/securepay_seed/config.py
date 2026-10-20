@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 # FECHA_REFERENCIA no se usa aquí: se importa para que las tablas del seed
 # la sigan tomando de este archivo.
-from shared.config import FECHA_REFERENCIA, MONEDA_DECIMALES  # noqa: F401
+from securepay_shared.config import FECHA_REFERENCIA, MONEDA_DECIMALES  # noqa: F401
 
 load_dotenv()
 

@@ -17,7 +17,7 @@ import json
 import os
 from pathlib import Path
 
-from shared.models import ListaRestrictiva
+from securepay_shared.models import ListaRestrictiva
 
 OUTPUT = os.getenv("SEED_LIST_OUTPUT", "file")
 ARCHIVO = Path(os.getenv("SEED_LIST_FILE", "generated/listas/lista_restrictiva.jsonl"))
@@ -51,9 +51,9 @@ def guardar_local(contenido: str, ruta: Path = ARCHIVO) -> Path:
 
 def subir_s3(contenido: str, bucket: str = BUCKET, clave: str = CLAVE_S3):
     # Import aquí: el modo file no necesita boto3 ni LocalStack.
-    from shared.aws import cliente
+    from securepay_shared.aws import get_client
 
-    cliente("s3", read_timeout=10).put_object(
+    get_client("s3", read_timeout=10).put_object(
         Bucket=bucket,
         Key=clave,
         Body=contenido.encode("utf-8"),
