@@ -3,13 +3,13 @@ import uuid
 from datetime import timedelta
 from faker import Faker
 from sqlalchemy.dialects.postgresql import insert
-from shared.models import Comercio
-from db.seed.config import (
+from securepay_shared.models import Comercio
+from securepay_seed.config import (
     FECHA_REFERENCIA,
     COMERCIOS_NUEVOS_PCT,
     COMERCIOS_NUEVOS_DIAS,
 )
-from db.seed.fechas import fecha_hora_entre
+from securepay_seed.fechas import fecha_hora_entre
 
 NAMESPACE = uuid.UUID("12345678-1234-5678-1234-567812345678")
 

@@ -1,19 +1,28 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "securepay-seed"
 version = "0.1.0"
-description = "Database seed and ETL datasets for SecurePay (F4)"
+description = "Seed of the simulated wallet database and ETL of the Kaggle datasets for SecurePay"
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "securepay-shared>=0.1.0",
     "faker>=40.43.0",
     "python-dotenv>=1.2.4",
-    "boto3>=1.43.113",
+    "sqlalchemy>=2.1.4",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/securepay_seed"]
+
 [tool.pytest.ini_options]
-pythonpath = ["."]
-testpaths = ["seed", "datasets"]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib"]

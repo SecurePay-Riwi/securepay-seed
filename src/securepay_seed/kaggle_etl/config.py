@@ -16,8 +16,8 @@ from dotenv import load_dotenv
 
 # Misma semilla y misma fecha fija que el seed, para que todo el azar de
 # este ETL cuelgue de los mismos valores.
-from db.seed.config import SEED
-from shared.config import FECHA_REFERENCIA
+from securepay_seed.config import SEED
+from securepay_shared.config import FECHA_REFERENCIA
 
 load_dotenv()
 
@@ -28,12 +28,14 @@ FRAUDTEST_ARCHIVO = "fraudTest.csv"
 
 ARCHIVOS = (PAYSIM_ARCHIVO, FRAUDTEST_ARCHIVO)
 
-# Carpetas donde se buscan los CSV, en este orden. La segunda es la misma que
-# usa la carga al Data Lake (sources.csv_files.kaggle), para no descargar
-# 600 MB dos veces: basta con que los dos CSV estén juntos en una de las dos.
+# Carpetas donde se buscan los CSV, en este orden. La descarga de Kaggle vive
+# en el repo securepay-csv (securepay_csv.kaggle_datasets); si ese repo está
+# clonado al lado de este, se usan sus CSV sin descargar 600 MB dos veces.
+# Basta con que los dos CSV estén juntos en una de las carpetas.
 CARPETAS_CANDIDATAS = (
     Path(__file__).parent / "raw",
     Path(os.getenv("KAGGLE_DOWNLOAD_DIR", "data/kaggle")),
+    Path("../securepay-csv/data/kaggle"),
 )
 
 

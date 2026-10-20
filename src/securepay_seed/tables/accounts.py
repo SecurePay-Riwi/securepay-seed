@@ -4,8 +4,8 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy.dialects.postgresql import insert
 
-from shared.models import Cuenta
-from db.seed.config import MONEDAS, CUENTAS_BLOQUEADAS_PCT
+from securepay_shared.models import Cuenta
+from securepay_seed.config import MONEDAS, CUENTAS_BLOQUEADAS_PCT
 
 NAMESPACE = uuid.UUID("12345678-1234-5678-1234-567812345678")
 

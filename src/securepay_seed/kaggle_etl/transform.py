@@ -27,7 +27,7 @@ from bisect import bisect_right
 from dataclasses import dataclass, field
 from datetime import timedelta, timezone
 
-from db.datasets.config import (
+from securepay_seed.kaggle_etl.config import (
     CATEGORIA_FRAUDTEST,
     FRAUDTEST_DESPLAZAMIENTO,
     PAYSIM_INICIO,
@@ -35,9 +35,9 @@ from db.datasets.config import (
     TIPO_PAYSIM,
     nuevo_rng,
 )
-from db.seed.tables.accounts import NAMESPACE
+from securepay_seed.tables.accounts import NAMESPACE
 # Canales por tipo de operación: la misma tabla que usa el generador.
-from shared.config import CANALES
+from securepay_shared.config import CANALES
 
 
 @dataclass(frozen=True)

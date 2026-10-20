@@ -4,10 +4,10 @@ import uuid
 from faker import Faker
 from sqlalchemy.dialects.postgresql import insert
 
-from shared.models import Usuario
-from db.seed.config import FECHA_REFERENCIA
-from db.seed.fechas import fecha_entre, fecha_hora_entre
-from db.seed.defects.injector import (
+from securepay_shared.models import Usuario
+from securepay_seed.config import FECHA_REFERENCIA
+from securepay_seed.fechas import fecha_entre, fecha_hora_entre
+from securepay_seed.defects.injector import (
     inyectar_defectos_usuarios,
     guardar_reporte_defectos,
 )

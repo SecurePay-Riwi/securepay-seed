@@ -8,7 +8,7 @@ import json
 from datetime import date
 from types import SimpleNamespace
 
-from db.seed.export_lista import a_jsonl, guardar_local
+from securepay_seed.export_lista import a_jsonl, guardar_local
 
 
 def fila(documento, tipo, fecha):

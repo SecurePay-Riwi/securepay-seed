@@ -4,16 +4,16 @@ import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from shared.config import CANALES
-from db.datasets.config import (
+from securepay_shared.config import CANALES
+from securepay_seed.kaggle_etl.config import (
     CATEGORIA_FRAUDTEST,
     FRAUDTEST_DESPLAZAMIENTO,
     PAYSIM_INICIO,
     TIPO_PAYSIM,
 )
-from db.datasets.config import ARCHIVOS, carpeta_raw
-from db.datasets.extract import muestrear_fraudtest, muestrear_paysim
-from db.datasets.transform import (
+from securepay_seed.kaggle_etl.config import ARCHIVOS, carpeta_raw
+from securepay_seed.kaggle_etl.extract import muestrear_fraudtest, muestrear_paysim
+from securepay_seed.kaggle_etl.transform import (
     Dimensiones,
     huella,
     transformar_fraudtest,
@@ -106,7 +106,7 @@ def test_misma_semilla_misma_muestra(tmp_path):
 
 
 def test_otra_semilla_otra_muestra(tmp_path, monkeypatch):
-    import db.datasets.extract as extract
+    import securepay_seed.kaggle_etl.extract as extract
 
     ruta = tmp_path / "paysim.csv"
     escribir_paysim(ruta)

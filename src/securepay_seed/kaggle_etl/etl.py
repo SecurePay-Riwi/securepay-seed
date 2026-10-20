@@ -2,8 +2,8 @@
 
 Se ejecuta DESPUÉS del seed, desde la raíz del repositorio:
 
-    uv run python -m db.datasets.etl --dry-run   # muestra qué haría, sin escribir
-    uv run python -m db.datasets.etl             # carga las transacciones
+    uv run python -m securepay_seed.kaggle_etl.etl --dry-run   # muestra qué haría, sin escribir
+    uv run python -m securepay_seed.kaggle_etl.etl             # carga las transacciones
 
 Solo lee usuarios, dispositivos y comercios del seed y solo escribe en la
 tabla transacciones. Es idempotente: correrlo otra vez no duplica nada.
@@ -14,7 +14,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from db.datasets.config import (
+from securepay_seed.kaggle_etl.config import (
     FRAUDTEST_ARCHIVO,
     FRAUDTEST_FILAS,
     FRAUDTEST_FRAUDE_PCT,
@@ -25,10 +25,10 @@ from db.datasets.config import (
     CARPETAS_CANDIDATAS,
     carpeta_raw,
 )
-from db.datasets.extract import muestrear_fraudtest, muestrear_paysim, sha256_archivo
-from db.datasets.load import cargar_dimensiones, contar_transacciones, insertar
-from db.datasets.transform import huella, transformar_fraudtest, transformar_paysim
-from shared.db import get_session
+from securepay_seed.kaggle_etl.extract import muestrear_fraudtest, muestrear_paysim, sha256_archivo
+from securepay_seed.kaggle_etl.load import cargar_dimensiones, contar_transacciones, insertar
+from securepay_seed.kaggle_etl.transform import huella, transformar_fraudtest, transformar_paysim
+from securepay_shared.db import get_session
 
 
 def verificar_archivos(raw_dir, omitir_hash):
@@ -117,7 +117,7 @@ def main():
         dims = cargar_dimensiones(session)
         if not dims.usuarios or not dims.comercios:
             sys.exit("El seed no ha creado usuarios con dispositivo o comercios activos. "
-                     "Corre primero: uv run python -m db.seed.seed")
+                     "Corre primero: uv run python -m securepay_seed.seed")
         print(f"  {len(dims.usuarios):,} usuarios con dispositivo propio, "
               f"{len(dims.comercios):,} comercios activos")
 
