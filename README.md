@@ -109,3 +109,15 @@ Environment variables still override every path (see `.env.example`).
 
 - [`securepay-shared`](https://pypi.org/project/securepay-shared/): shared models, database and config
 - PostgreSQL 16+
+
+
+## Docker image (MAG-31)
+
+Build and run the seed image from the repository root. The image uses Python 3.12 and `uv`, installs locked production dependencies, and runs the seed command by default.
+
+```bash
+docker build -t securepay-seed .
+docker run --rm --env-file .env securepay-seed
+```
+
+For the full local ecosystem, use the `docker-compose.yml` in the `SecurePay` repository; it configures the database connection and shared generated-data volume.
