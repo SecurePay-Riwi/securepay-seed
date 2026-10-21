@@ -109,3 +109,16 @@ Environment variables still override every path (see `.env.example`).
 
 - [`securepay-shared`](https://pypi.org/project/securepay-shared/): shared models, database and config
 - PostgreSQL 16+
+
+
+## Docker
+
+The Python 3.12 image with uv defaults to running the seed:
+
+```bash
+docker build -t securepay-seed .
+```
+
+Provide a reachable PostgreSQL URL through `DATABASE_URL` and mount a writable
+volume at `/app/generated` for the restricted-list export. Compose waits for
+PostgreSQL to become healthy before starting the seed.

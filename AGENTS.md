@@ -78,3 +78,11 @@ Read these before changing the design, not to work on the code:
 - Logbook: https://securepay-riwi.github.io/SecurePay/docs/logbook
 - This component: https://securepay-riwi.github.io/SecurePay/docs/components/seed
 - Kaggle ETL: https://securepay-riwi.github.io/SecurePay/docs/components/kaggle-datasets
+
+
+## Docker image
+
+- The root `Dockerfile` runs `python -m securepay_seed.seed` by default.
+- Set `DATABASE_URL` to a database hostname reachable from the container and
+  share `/app/generated` when another service consumes the exported list.
+- Compose runs the seed as a one-shot job with `SEED_RESET=true`.
