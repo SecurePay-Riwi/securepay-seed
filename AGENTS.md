@@ -18,6 +18,8 @@ Run everything from the repository root.
 ```bash
 uv sync                 # install (Python 3.12, securepay-shared from PyPI)
 uv run pytest           # tests; they need no database, internet or LocalStack
+uv run ruff format .    # format (CI checks it)
+uv run ruff check .     # lint (CI checks it)
 uv run python -m securepay_seed.seed                 # seed (needs PostgreSQL)
 uv run python -m securepay_seed.kaggle_etl.etl --dry-run
 ```
@@ -82,6 +84,10 @@ every repository in the SecurePay-Riwi organization.
   follow the same sections: Context (with the Jira ticket), Type of change,
   Before / After, How and why, Missing, How to test (the exact commands, the
   folder or service they run in and the expected result) and Checklist.
+- **Before opening a PR:** `uv run ruff format .`, `uv run ruff check .` and
+  `uv run pytest`. The CI (`.github/workflows/ci.yml`: jobs `lint`,
+  `secret-scan`, `tests`) runs the same on every PR to `main` and must be
+  green to merge. It has no deploy: this repository only produces data.
 
 ## Known traps
 

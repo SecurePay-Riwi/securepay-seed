@@ -1,0 +1,4 @@
+# Commits that only reformat code. Run once:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# style: apply SecurePay's ruff rules
+15d91d4e51a0d0a11311046c2377fcf08821f0f5
