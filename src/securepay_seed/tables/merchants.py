@@ -1,17 +1,20 @@
 import random
 import uuid
 from datetime import timedelta
+
 from faker import Faker
-from sqlalchemy.dialects.postgresql import insert
 from securepay_shared.models import Comercio
+from sqlalchemy.dialects.postgresql import insert
+
 from securepay_seed.config import (
-    FECHA_REFERENCIA,
-    COMERCIOS_NUEVOS_PCT,
     COMERCIOS_NUEVOS_DIAS,
+    COMERCIOS_NUEVOS_PCT,
+    FECHA_REFERENCIA,
 )
 from securepay_seed.fechas import fecha_hora_entre
 
 NAMESPACE = uuid.UUID("12345678-1234-5678-1234-567812345678")
+
 
 def generar_comercios(session, cantidad):
     fake = Faker("es_CO")
@@ -44,11 +47,7 @@ def generar_comercios(session, cantidad):
             desde, hasta = creacion_desde, nuevos_desde
 
         # Faker deja "and" y "Ltd" en inglés; se pasan a español.
-        empresa = (
-            fake.company()
-            .replace(" and ", " y ")
-            .replace(" Ltd", " Ltda.")
-        )
+        empresa = fake.company().replace(" and ", " y ").replace(" Ltd", " Ltda.")
         categoria = random.choice(categorias)
 
         comercio = {
@@ -65,11 +64,11 @@ def generar_comercios(session, cantidad):
         comercios.append(comercio)
 
     for c in comercios:
-        stmt = insert(Comercio).values(**c).on_conflict_do_nothing(
-            index_elements=["id"]
+        stmt = (
+            insert(Comercio).values(**c).on_conflict_do_nothing(index_elements=["id"])
         )
         session.execute(stmt)
 
     session.commit()
     print(f"  {len(comercios)} comercios generados ({n_nuevos} recién creados)")
-    return comercios
+    return comercios

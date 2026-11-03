@@ -2,6 +2,7 @@ import json
 import random
 from pathlib import Path
 
+
 def seleccionar_registros(registros, porcentaje, seed=42):
     """
     Selecciona de forma reproducible un porcentaje de registros.
@@ -49,15 +50,18 @@ def inyectar_defectos_usuarios(registros, porcentaje, seed=42):
             usuario["documento"] = f" {canonico} "
             formato = "ESPACIOS"
 
-        defectos.append({
-            "id": usuario["id"],
-            "tipo": formato,
-            "campo": "documento",
-            "canonico": canonico,
-            "valor": usuario["documento"],
-        })
+        defectos.append(
+            {
+                "id": usuario["id"],
+                "tipo": formato,
+                "campo": "documento",
+                "canonico": canonico,
+                "valor": usuario["documento"],
+            }
+        )
 
     return defectos
+
 
 def guardar_reporte_defectos(defectos):
     """
@@ -68,12 +72,6 @@ def guardar_reporte_defectos(defectos):
     ruta = Path("defect_report.json")
 
     with ruta.open("w", encoding="utf-8") as archivo:
-        json.dump(
-            defectos,
-            archivo,
-            indent=4,
-            ensure_ascii=False,
-            default=str
-        )
+        json.dump(defectos, archivo, indent=4, ensure_ascii=False, default=str)
 
     return ruta

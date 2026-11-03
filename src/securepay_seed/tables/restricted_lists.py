@@ -1,17 +1,20 @@
 import random
 import re
 import uuid
+
 from faker import Faker
-from sqlalchemy.dialects.postgresql import insert
 from securepay_shared.models import ListaRestrictiva
+from sqlalchemy.dialects.postgresql import insert
+
 from securepay_seed.config import (
     FECHA_REFERENCIA,
-    USUARIOS_EN_LISTA_PCT,
     USUARIOS_EN_LISTA_MIN,
+    USUARIOS_EN_LISTA_PCT,
 )
 from securepay_seed.fechas import fecha_entre
 
 NAMESPACE = uuid.UUID("12345678-1234-5678-1234-567812345678")
+
 
 def generar_listas(session, usuarios, cantidad):
     fake = Faker("es_CO")
@@ -40,19 +43,25 @@ def generar_listas(session, usuarios, cantidad):
             # coinciden con las de 10 dígitos de los usuarios.
             documento = str(10_000_000 + i)
 
-        listas.append({
-            "id": uuid.uuid5(NAMESPACE, f"list:{i}"),
-            "documento": documento,
-            "tipo": fake.random_element(elements=("sanciones", "PEP")),
-            "fecha_inclusion": fecha_entre(fake.random, inclusion_desde, hoy),
-        })
+        listas.append(
+            {
+                "id": uuid.uuid5(NAMESPACE, f"list:{i}"),
+                "documento": documento,
+                "tipo": fake.random_element(elements=("sanciones", "PEP")),
+                "fecha_inclusion": fecha_entre(fake.random, inclusion_desde, hoy),
+            }
+        )
 
-    for l in listas:
-        stmt = insert(ListaRestrictiva).values(**l).on_conflict_do_nothing(
-            index_elements=["documento"]
+    for fila in listas:
+        stmt = (
+            insert(ListaRestrictiva)
+            .values(**fila)
+            .on_conflict_do_nothing(index_elements=["documento"])
         )
         session.execute(stmt)
 
     session.commit()
-    print(f"  {len(listas)} personas en la lista restrictiva ({n_clientes} son clientes)")
-    return listas
+    print(
+        f"  {len(listas)} personas en la lista restrictiva ({n_clientes} son clientes)"
+    )
+    return listas

@@ -28,7 +28,9 @@ MONTO_MAX = 9_999_999_999.99
 # PaySim (nameOrig) y la tarjeta en Sparkov (cc_num). Cada titular queda
 # ligado a un solo usuario del seed.
 FilaPaySim = namedtuple("FilaPaySim", "indice step tipo monto es_fraude titular")
-FilaFraudTest = namedtuple("FilaFraudTest", "indice fecha categoria monto es_fraude titular")
+FilaFraudTest = namedtuple(
+    "FilaFraudTest", "indice fecha categoria monto es_fraude titular"
+)
 
 
 @dataclass
@@ -94,7 +96,10 @@ def _pedidas(total, fraude_pct):
 
 def muestrear_paysim(ruta, total, fraude_pct):
     columnas = {
-        "step": "step", "tipo": "type", "monto": "amount", "fraude": "isFraud",
+        "step": "step",
+        "tipo": "type",
+        "monto": "amount",
+        "fraude": "isFraud",
         "titular": "nameOrig",
     }
 
@@ -128,9 +133,8 @@ def muestrear_fraudtest(ruta, total, fraude_pct):
     }
 
     def valida(fila, pos):
-        return (
-            fila[pos["categoria"]] in CATEGORIA_FRAUDTEST
-            and _monto_valido(fila[pos["monto"]])
+        return fila[pos["categoria"]] in CATEGORIA_FRAUDTEST and _monto_valido(
+            fila[pos["monto"]]
         )
 
     muestra, elegidas, pos = _muestrear(

@@ -2,10 +2,10 @@ import random
 import uuid
 from decimal import ROUND_HALF_UP, Decimal
 
+from securepay_shared.models import Cuenta
 from sqlalchemy.dialects.postgresql import insert
 
-from securepay_shared.models import Cuenta
-from securepay_seed.config import MONEDAS, CUENTAS_BLOQUEADAS_PCT
+from securepay_seed.config import CUENTAS_BLOQUEADAS_PCT, MONEDAS
 
 NAMESPACE = uuid.UUID("12345678-1234-5678-1234-567812345678")
 
@@ -30,18 +30,22 @@ def generar_cuentas(session, usuarios):
 
         bloqueada = rng.random() * 100 < CUENTAS_BLOQUEADAS_PCT
 
-        cuentas.append({
-            "id": uuid.uuid5(NAMESPACE, f"account:{u['id']}"),
-            "user_id": u["id"],
-            "moneda": moneda,
-            "saldo": saldo,
-            "fecha_apertura": u["fecha_registro"],
-            "estado": "bloqueada" if bloqueada else "activa",
-        })
+        cuentas.append(
+            {
+                "id": uuid.uuid5(NAMESPACE, f"account:{u['id']}"),
+                "user_id": u["id"],
+                "moneda": moneda,
+                "saldo": saldo,
+                "fecha_apertura": u["fecha_registro"],
+                "estado": "bloqueada" if bloqueada else "activa",
+            }
+        )
 
     for c in cuentas:
-        stmt = insert(Cuenta).values(**c).on_conflict_do_nothing(
-            index_elements=["user_id"]
+        stmt = (
+            insert(Cuenta)
+            .values(**c)
+            .on_conflict_do_nothing(index_elements=["user_id"])
         )
         session.execute(stmt)
 

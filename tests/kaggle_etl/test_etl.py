@@ -5,13 +5,15 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from securepay_shared.config import CANALES
+
 from securepay_seed.kaggle_etl.config import (
+    ARCHIVOS,
     CATEGORIA_FRAUDTEST,
     FRAUDTEST_DESPLAZAMIENTO,
     PAYSIM_INICIO,
     TIPO_PAYSIM,
+    carpeta_raw,
 )
-from securepay_seed.kaggle_etl.config import ARCHIVOS, carpeta_raw
 from securepay_seed.kaggle_etl.extract import muestrear_fraudtest, muestrear_paysim
 from securepay_seed.kaggle_etl.transform import (
     Dimensiones,
@@ -26,16 +28,21 @@ REFERENCIA = datetime(2026, 10, 1)
 
 # --- Datos de prueba -------------------------------------------------------
 
+
 def escribir_paysim(ruta, filas=600):
     """600 filas: una de cada 20 es fraude; una tiene monto 0 (se descarta)."""
     tipos = list(TIPO_PAYSIM)
-    lineas = ["step,type,amount,nameOrig,oldbalanceOrg,newbalanceOrig,"
-              "nameDest,oldbalanceDest,newbalanceDest,isFraud,isFlaggedFraud"]
+    lineas = [
+        "step,type,amount,nameOrig,oldbalanceOrg,newbalanceOrig,"
+        "nameDest,oldbalanceDest,newbalanceDest,isFraud,isFlaggedFraud"
+    ]
     for i in range(filas):
         monto = "0.0" if i == 7 else f"{100 + i}.25"
         fraude = 1 if i % 20 == 0 else 0
         # 40 cuentas origen que se repiten, para probar que cada una va a un solo usuario.
-        lineas.append(f"{1 + i // 10},{tipos[i % 5]},{monto},C{i % 40},0,0,M{i},0,0,{fraude},0")
+        lineas.append(
+            f"{1 + i // 10},{tipos[i % 5]},{monto},C{i % 40},0,0,M{i},0,0,{fraude},0"
+        )
     ruta.write_text("\n".join(lineas) + "\n", encoding="utf-8")
 
 
@@ -48,38 +55,49 @@ def escribir_fraudtest(ruta, filas=400):
         fraude = 1 if i % 25 == 0 else 0
         # 12 tarjetas que se repiten.
         tarjeta = 4000_0000_0000_0000 + i % 12
-        lineas.append(f"{i},{fecha:%Y-%m-%d %H:%M:%S},{tarjeta},{categorias[i % 14]},{10 + i}.50,{fraude}")
+        lineas.append(
+            f"{i},{fecha:%Y-%m-%d %H:%M:%S},{tarjeta},{categorias[i % 14]},{10 + i}.50,{fraude}"
+        )
     # fraudTest viene con saltos de línea de Windows.
     ruta.write_bytes(("\r\n".join(lineas) + "\r\n").encode("utf-8"))
 
 
 def dimensiones():
     """3 usuarios con 1 o 2 dispositivos y 6 comercios activos de 3 categorías."""
+
     def uid(x):
         return uuid.uuid5(NS, x)
 
     # Todos existen antes de las fechas del ETL salvo "tardio".
     d = {
-        uid("u0"): ((datetime(2024, 1, 1), uid("d0a")), (datetime(2025, 5, 1), uid("d0b"))),
+        uid("u0"): (
+            (datetime(2024, 1, 1), uid("d0a")),
+            (datetime(2025, 5, 1), uid("d0b")),
+        ),
         uid("u1"): ((datetime(2025, 1, 1), uid("d1a")),),
         uid("tardio"): ((datetime(2026, 9, 20), uid("dt")),),
     }
     usuarios = tuple(sorted(((v[0][0], u) for u, v in d.items()), key=lambda x: x[0]))
-    comercios = tuple(sorted(
-        [
-            (datetime(2024, 3, 1), uid("m0"), "alimentos"),
-            (datetime(2024, 3, 2), uid("m1"), "alimentos"),
-            (datetime(2024, 4, 1), uid("m2"), "retail"),
-            (datetime(2024, 5, 1), uid("m3"), "salud"),
-            (datetime(2024, 6, 1), uid("m4"), "servicios"),
-            (datetime(2026, 9, 25), uid("mnuevo"), "tecnologia"),
-        ],
-        key=lambda x: x[0],
-    ))
-    return Dimensiones(usuarios=usuarios, dispositivos=d, comercios=comercios), uid("tardio")
+    comercios = tuple(
+        sorted(
+            [
+                (datetime(2024, 3, 1), uid("m0"), "alimentos"),
+                (datetime(2024, 3, 2), uid("m1"), "alimentos"),
+                (datetime(2024, 4, 1), uid("m2"), "retail"),
+                (datetime(2024, 5, 1), uid("m3"), "salud"),
+                (datetime(2024, 6, 1), uid("m4"), "servicios"),
+                (datetime(2026, 9, 25), uid("mnuevo"), "tecnologia"),
+            ],
+            key=lambda x: x[0],
+        )
+    )
+    return Dimensiones(usuarios=usuarios, dispositivos=d, comercios=comercios), uid(
+        "tardio"
+    )
 
 
 # --- Extracción ------------------------------------------------------------
+
 
 def test_muestra_paysim_tiene_la_cantidad_exacta_de_fraudes(tmp_path):
     ruta = tmp_path / "paysim.csv"
@@ -113,8 +131,10 @@ def test_otra_semilla_otra_muestra(tmp_path, monkeypatch):
     a = muestrear_paysim(ruta, 100, 10)
 
     import random
+
     monkeypatch.setattr(
-        extract, "nuevo_rng",
+        extract,
+        "nuevo_rng",
         lambda dataset, proposito: random.Random(f"otra:{dataset}:{proposito}"),
     )
     b = muestrear_paysim(ruta, 100, 10)
@@ -146,6 +166,7 @@ def test_lee_fraudtest_con_saltos_de_linea_de_windows(tmp_path):
 
 
 # --- Transformación --------------------------------------------------------
+
 
 def lote_paysim(tmp_path, total=200):
     ruta = tmp_path / "paysim.csv"
@@ -195,7 +216,9 @@ def test_el_comercio_ya_existia(tmp_path):
     for lote, dims in (lote_paysim(tmp_path), lote_fraudtest(tmp_path)):
         creacion = {m[1]: m[0] for m in dims.comercios}
         for f in lote.filas:
-            assert f["transaction_date"].replace(tzinfo=None) >= creacion[f["merchant_id"]]
+            assert (
+                f["transaction_date"].replace(tzinfo=None) >= creacion[f["merchant_id"]]
+            )
 
 
 def test_usuario_que_nace_despues_no_recibe_transacciones_anteriores(tmp_path):
@@ -209,7 +232,9 @@ def test_usuario_que_nace_despues_no_recibe_transacciones_anteriores(tmp_path):
 def test_fechas_de_paysim_y_fraudtest_caen_antes_de_la_referencia(tmp_path):
     for lote, _ in (lote_paysim(tmp_path), lote_fraudtest(tmp_path)):
         for f in lote.filas:
-            assert f["transaction_date"].replace(tzinfo=None) < REFERENCIA + timedelta(days=1)
+            assert f["transaction_date"].replace(tzinfo=None) < REFERENCIA + timedelta(
+                days=1
+            )
             assert f["transaction_date"].tzinfo is not None
 
 
@@ -225,7 +250,7 @@ def test_fraudtest_conserva_la_separacion_entre_transacciones(tmp_path):
     dims, _ = dimensiones()
     m = muestrear_fraudtest(ruta, 100, 10)
     lote = transformar_fraudtest(m.filas, dims)
-    for origen, destino in zip(m.filas, lote.filas):
+    for origen, destino in zip(m.filas, lote.filas, strict=True):
         esperada = origen.fecha + FRAUDTEST_DESPLAZAMIENTO
         real = destino["transaction_date"].replace(tzinfo=None)
         # Solo se adelanta si el usuario o el comercio aún no existían.
@@ -285,7 +310,12 @@ def test_cada_titular_queda_ligado_a_un_solo_usuario(tmp_path):
     dims, _ = dimensiones()
     casos = (
         (escribir_paysim, "paysim.csv", muestrear_paysim, transformar_paysim),
-        (escribir_fraudtest, "fraudTest.csv", muestrear_fraudtest, transformar_fraudtest),
+        (
+            escribir_fraudtest,
+            "fraudTest.csv",
+            muestrear_fraudtest,
+            transformar_fraudtest,
+        ),
     )
     for escribir, nombre, muestrear, transformar in casos:
         ruta = tmp_path / nombre
@@ -293,10 +323,14 @@ def test_cada_titular_queda_ligado_a_un_solo_usuario(tmp_path):
         muestra = muestrear(ruta, 200, 10)
         lote = transformar(muestra.filas, dims)
         usuarios_por_titular = {}
-        for origen, destino in zip(muestra.filas, lote.filas):
-            usuarios_por_titular.setdefault(origen.titular, set()).add(destino["user_id"])
+        for origen, destino in zip(muestra.filas, lote.filas, strict=True):
+            usuarios_por_titular.setdefault(origen.titular, set()).add(
+                destino["user_id"]
+            )
         assert all(len(u) == 1 for u in usuarios_por_titular.values())
-        assert {t: next(iter(u)) for t, u in usuarios_por_titular.items()} == lote.titulares
+        assert {
+            t: next(iter(u)) for t, u in usuarios_por_titular.items()
+        } == lote.titulares
         # Hay menos titulares que filas: las tarjetas y cuentas se repiten.
         assert len(lote.titulares) < len(lote.filas)
 
@@ -309,6 +343,7 @@ def test_un_usuario_puede_tener_varias_tarjetas(tmp_path):
 
 # --- Carpeta de los CSV ----------------------------------------------------
 
+
 def _con_archivos(carpeta, nombres=ARCHIVOS):
     carpeta.mkdir(parents=True, exist_ok=True)
     for nombre in nombres:
@@ -316,7 +351,9 @@ def _con_archivos(carpeta, nombres=ARCHIVOS):
     return carpeta
 
 
-def test_carpeta_raw_prefiere_la_primera_que_tiene_los_dos_archivos(tmp_path, monkeypatch):
+def test_carpeta_raw_prefiere_la_primera_que_tiene_los_dos_archivos(
+    tmp_path, monkeypatch
+):
     monkeypatch.delenv("HIST_RAW_DIR", raising=False)
     a, b = tmp_path / "a", tmp_path / "b"
     _con_archivos(a)

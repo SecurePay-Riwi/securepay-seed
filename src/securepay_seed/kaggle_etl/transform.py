@@ -25,7 +25,10 @@ import hashlib
 import uuid
 from bisect import bisect_right
 from dataclasses import dataclass, field
-from datetime import timedelta, timezone
+from datetime import UTC, timedelta
+
+# Canales por tipo de operación: la misma tabla que usa el generador.
+from securepay_shared.config import CANALES
 
 from securepay_seed.kaggle_etl.config import (
     CATEGORIA_FRAUDTEST,
@@ -36,8 +39,6 @@ from securepay_seed.kaggle_etl.config import (
     nuevo_rng,
 )
 from securepay_seed.tables.accounts import NAMESPACE
-# Canales por tipo de operación: la misma tabla que usa el generador.
-from securepay_shared.config import CANALES
 
 
 @dataclass(frozen=True)
@@ -148,7 +149,7 @@ def _id_transaccion(dataset, indice):
 
 
 def _en_utc(fecha):
-    return fecha.replace(tzinfo=timezone.utc)
+    return fecha.replace(tzinfo=UTC)
 
 
 def transformar_paysim(filas, dims):
@@ -190,8 +191,12 @@ def transformar_paysim(filas, dims):
             lote,
             fila,
             destino,
-            {"step": fila.step, "type": fila.tipo, "amount": fila.monto,
-             "isFraud": int(fila.es_fraude)},
+            {
+                "step": fila.step,
+                "type": fila.tipo,
+                "amount": fila.monto,
+                "isFraud": int(fila.es_fraude),
+            },
         )
     lote.titulares = asignador.titulares
     return lote
@@ -236,9 +241,12 @@ def transformar_fraudtest(filas, dims):
             lote,
             fila,
             destino,
-            {"trans_date_trans_time": fila.fecha.isoformat(sep=" "),
-             "category": fila.categoria, "amt": fila.monto,
-             "is_fraud": int(fila.es_fraude)},
+            {
+                "trans_date_trans_time": fila.fecha.isoformat(sep=" "),
+                "category": fila.categoria,
+                "amt": fila.monto,
+                "is_fraud": int(fila.es_fraude),
+            },
         )
     lote.titulares = asignador.titulares
     if asignador.categoria_pedida:
@@ -265,9 +273,15 @@ def huella(filas):
     h = hashlib.sha256()
     for f in filas:
         partes = (
-            f["id"], f["user_id"], f["device_id"], f["merchant_id"],
-            format(f["amount"], "f"), f["transaction_date"].isoformat(),
-            f["channel"], int(f["is_fraud"]), f["fraud_pattern"] or "",
+            f["id"],
+            f["user_id"],
+            f["device_id"],
+            f["merchant_id"],
+            format(f["amount"], "f"),
+            f["transaction_date"].isoformat(),
+            f["channel"],
+            int(f["is_fraud"]),
+            f["fraud_pattern"] or "",
         )
         h.update("|".join(str(p) for p in partes).encode("utf-8"))
         h.update(b"\n")
