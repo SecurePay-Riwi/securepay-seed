@@ -1,21 +1,20 @@
-
 import os
 
+from securepay_shared.db import engine, get_session
+from securepay_shared.models import Base
 from sqlalchemy import text
 
 from securepay_seed.config import (
+    DEFECT_PERCENTAGE,
     MODE,
     VOLUMES,
-    DEFECT_PERCENTAGE,
 )
-from securepay_shared.db import get_session, engine
-from securepay_shared.models import Base
-from securepay_seed.tables.users import generar_usuarios
+from securepay_seed.export_lista import exportar_lista
 from securepay_seed.tables.accounts import generar_cuentas
 from securepay_seed.tables.devices import generar_dispositivos
 from securepay_seed.tables.merchants import generar_comercios
 from securepay_seed.tables.restricted_lists import generar_listas
-from securepay_seed.export_lista import exportar_lista
+from securepay_seed.tables.users import generar_usuarios
 
 
 def reset_tablas():

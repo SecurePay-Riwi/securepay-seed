@@ -2,15 +2,15 @@ import random
 import uuid
 
 from faker import Faker
+from securepay_shared.models import Usuario
 from sqlalchemy.dialects.postgresql import insert
 
-from securepay_shared.models import Usuario
 from securepay_seed.config import FECHA_REFERENCIA
-from securepay_seed.fechas import fecha_entre, fecha_hora_entre
 from securepay_seed.defects.injector import (
-    inyectar_defectos_usuarios,
     guardar_reporte_defectos,
+    inyectar_defectos_usuarios,
 )
+from securepay_seed.fechas import fecha_entre, fecha_hora_entre
 
 NAMESPACE = uuid.UUID("12345678-1234-5678-1234-567812345678")
 
@@ -31,33 +31,32 @@ def generar_usuarios(session, cantidad, defect_percentage=0):
     for i in range(cantidad):
         user_id = uuid.uuid5(NAMESPACE, f"user:{i}")
 
-        usuarios.append({
-            "id": user_id,
-            "nombre": fake.name(),
-            "email": f"user{i}@pagoseguro.com",
-            # Documento en formato canónico: solo dígitos, como una cédula
-            # sin puntos ni prefijo. Es el formato de la lista restrictiva.
-            "documento": str(1_000_000_000 + i),
-            "telefono": fake.phone_number(),
-            "fecha_nacimiento": fecha_entre(
-                fake.random, nacimiento_desde, nacimiento_hasta
-            ),
-            "kyc_estado": random.choice(
-                ["aprobado", "pendiente", "rechazado"]
-            ),
-            "fecha_registro": fecha_hora_entre(
-                fake.random, registro_desde, FECHA_REFERENCIA
-            ),
-        })
+        usuarios.append(
+            {
+                "id": user_id,
+                "nombre": fake.name(),
+                "email": f"user{i}@pagoseguro.com",
+                # Documento en formato canónico: solo dígitos, como una cédula
+                # sin puntos ni prefijo. Es el formato de la lista restrictiva.
+                "documento": str(1_000_000_000 + i),
+                "telefono": fake.phone_number(),
+                "fecha_nacimiento": fecha_entre(
+                    fake.random, nacimiento_desde, nacimiento_hasta
+                ),
+                "kyc_estado": random.choice(["aprobado", "pendiente", "rechazado"]),
+                "fecha_registro": fecha_hora_entre(
+                    fake.random, registro_desde, FECHA_REFERENCIA
+                ),
+            }
+        )
 
-    defectos = inyectar_defectos_usuarios(
-        usuarios,
-        defect_percentage
-    )
+    defectos = inyectar_defectos_usuarios(usuarios, defect_percentage)
 
     for u in usuarios:
-        stmt = insert(Usuario).values(**u).on_conflict_do_nothing(
-            index_elements=["documento"]
+        stmt = (
+            insert(Usuario)
+            .values(**u)
+            .on_conflict_do_nothing(index_elements=["documento"])
         )
         session.execute(stmt)
 
@@ -69,11 +68,7 @@ def generar_usuarios(session, cantidad, defect_percentage=0):
         print(f"  {len(defectos)} defectos inyectados")
 
         for defecto in defectos:
-            print(
-                f"    {defecto['tipo']} → "
-                f"{defecto['campo']} → "
-                f"{defecto['id']}"
-            )
+            print(f"    {defecto['tipo']} → {defecto['campo']} → {defecto['id']}")
 
     guardar_reporte_defectos(defectos)
 

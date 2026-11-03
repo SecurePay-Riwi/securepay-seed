@@ -13,11 +13,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
+from securepay_shared.config import FECHA_REFERENCIA
 
 # Misma semilla y misma fecha fija que el seed, para que todo el azar de
 # este ETL cuelgue de los mismos valores.
 from securepay_seed.config import SEED
-from securepay_shared.config import FECHA_REFERENCIA
 
 load_dotenv()
 

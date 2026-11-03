@@ -14,7 +14,10 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from securepay_shared.db import get_session
+
 from securepay_seed.kaggle_etl.config import (
+    CARPETAS_CANDIDATAS,
     FRAUDTEST_ARCHIVO,
     FRAUDTEST_FILAS,
     FRAUDTEST_FRAUDE_PCT,
@@ -22,13 +25,23 @@ from securepay_seed.kaggle_etl.config import (
     PAYSIM_ARCHIVO,
     PAYSIM_FILAS,
     PAYSIM_FRAUDE_PCT,
-    CARPETAS_CANDIDATAS,
     carpeta_raw,
 )
-from securepay_seed.kaggle_etl.extract import muestrear_fraudtest, muestrear_paysim, sha256_archivo
-from securepay_seed.kaggle_etl.load import cargar_dimensiones, contar_transacciones, insertar
-from securepay_seed.kaggle_etl.transform import huella, transformar_fraudtest, transformar_paysim
-from securepay_shared.db import get_session
+from securepay_seed.kaggle_etl.extract import (
+    muestrear_fraudtest,
+    muestrear_paysim,
+    sha256_archivo,
+)
+from securepay_seed.kaggle_etl.load import (
+    cargar_dimensiones,
+    contar_transacciones,
+    insertar,
+)
+from securepay_seed.kaggle_etl.transform import (
+    huella,
+    transformar_fraudtest,
+    transformar_paysim,
+)
 
 
 def verificar_archivos(raw_dir, omitir_hash):
@@ -38,11 +51,12 @@ def verificar_archivos(raw_dir, omitir_hash):
     if faltan:
         carpetas = "\n  ".join(str(c) for c in CARPETAS_CANDIDATAS)
         sys.exit(
-            f"Faltan estos archivos en {raw_dir}:\n  " + "\n  ".join(faltan)
+            f"Faltan estos archivos en {raw_dir}:\n  "
+            + "\n  ".join(faltan)
             + "\nLos dos CSV deben estar juntos en una de estas carpetas:\n  "
             + carpetas
-            + "\nDescárgalos como explica el README (sección \"Datasets "
-            "históricos\") o indica otra carpeta con --raw-dir."
+            + '\nDescárgalos como explica el README (sección "Datasets '
+            'históricos") o indica otra carpeta con --raw-dir.'
         )
 
     for nombre, esperado in HASHES_ESPERADOS.items():
@@ -61,12 +75,22 @@ def verificar_archivos(raw_dir, omitir_hash):
 
 def reporte_extraccion(m):
     print(f"\n[{m.dataset}] extracción")
-    print(f"  filas leídas: {m.leidas:,}  |  descartadas (monto <= 0 o dato inválido): {m.descartadas:,}")
-    print(f"  disponibles: {m.disponibles_fraude:,} de fraude y {m.disponibles_normales:,} normales")
-    print(f"  pedidas: {m.pedidas_fraude:,} de fraude y {m.pedidas_normales:,} normales")
-    print(f"  elegidas: {len(m.filas):,} ({m.fraude:,} de fraude = {100 * m.fraude / max(len(m.filas), 1):.2f} %)")
+    print(
+        f"  filas leídas: {m.leidas:,}  |  descartadas (monto <= 0 o dato inválido): {m.descartadas:,}"
+    )
+    print(
+        f"  disponibles: {m.disponibles_fraude:,} de fraude y {m.disponibles_normales:,} normales"
+    )
+    print(
+        f"  pedidas: {m.pedidas_fraude:,} de fraude y {m.pedidas_normales:,} normales"
+    )
+    print(
+        f"  elegidas: {len(m.filas):,} ({m.fraude:,} de fraude = {100 * m.fraude / max(len(m.filas), 1):.2f} %)"
+    )
     if m.fraude < m.pedidas_fraude or len(m.filas) - m.fraude < m.pedidas_normales:
-        print("  AVISO: el dataset tiene menos filas de las pedidas; se usaron todas las disponibles.")
+        print(
+            "  AVISO: el dataset tiene menos filas de las pedidas; se usaron todas las disponibles."
+        )
 
 
 def reporte_transformacion(lote):
@@ -75,36 +99,59 @@ def reporte_transformacion(lote):
     fraude_por_usuario = Counter(f["user_id"] for f in filas if f["is_fraud"])
     fechas = [f["transaction_date"] for f in filas]
     print(f"\n[{lote.dataset}] transformación")
-    print(f"  filas: {len(filas):,} repartidas entre {len(por_usuario):,} usuarios "
-          f"(entre {min(por_usuario.values())} y {max(por_usuario.values())} por usuario)")
-    print(f"  titulares ({'cuentas' if lote.dataset == 'paysim' else 'tarjetas'}): "
-          f"{len(lote.titulares):,}, cada uno ligado a un solo usuario")
-    print(f"  usuarios con al menos un fraude: {len(fraude_por_usuario):,} "
-          f"(máximo {max(fraude_por_usuario.values(), default=0)} en uno solo)")
+    print(
+        f"  filas: {len(filas):,} repartidas entre {len(por_usuario):,} usuarios "
+        f"(entre {min(por_usuario.values())} y {max(por_usuario.values())} por usuario)"
+    )
+    print(
+        f"  titulares ({'cuentas' if lote.dataset == 'paysim' else 'tarjetas'}): "
+        f"{len(lote.titulares):,}, cada uno ligado a un solo usuario"
+    )
+    print(
+        f"  usuarios con al menos un fraude: {len(fraude_por_usuario):,} "
+        f"(máximo {max(fraude_por_usuario.values(), default=0)} en uno solo)"
+    )
     print(f"  fechas: {min(fechas):%Y-%m-%d %H:%M} a {max(fechas):%Y-%m-%d %H:%M} UTC")
     print(f"  canales: {dict(sorted(Counter(f['channel'] for f in filas).items()))}")
     if lote.categoria_respetada_pct is not None:
-        print(f"  comercio de la categoría equivalente: {lote.categoria_respetada_pct:.1f} % "
-              "(el resto va a otra categoría porque aún no existía un comercio activo de esa)")
+        print(
+            f"  comercio de la categoría equivalente: {lote.categoria_respetada_pct:.1f} % "
+            "(el resto va a otra categoría porque aún no existía un comercio activo de esa)"
+        )
     print("  antes (CSV) -> después (transacciones):")
     for destino, origen in lote.ejemplos:
         print(f"    ANTES   {origen}")
-        print(f"    DESPUÉS monto={destino['amount']}  fecha={destino['transaction_date']:%Y-%m-%d %H:%M:%S}  "
-              f"canal={destino['channel']}  is_fraud={destino['is_fraud']}  "
-              f"patron={destino['fraud_pattern']}")
-        print(f"            user_id={destino['user_id']}  device_id={destino['device_id']}  "
-              f"merchant_id={destino['merchant_id']}")
+        print(
+            f"    DESPUÉS monto={destino['amount']}  fecha={destino['transaction_date']:%Y-%m-%d %H:%M:%S}  "
+            f"canal={destino['channel']}  is_fraud={destino['is_fraud']}  "
+            f"patron={destino['fraud_pattern']}"
+        )
+        print(
+            f"            user_id={destino['user_id']}  device_id={destino['device_id']}  "
+            f"merchant_id={destino['merchant_id']}"
+        )
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--dry-run", action="store_true",
-                        help="hace todo menos escribir en la base de datos")
-    parser.add_argument("--raw-dir", type=Path, default=None,
-                        help="carpeta con los CSV (por defecto se busca en "
-                             + " y en ".join(str(c) for c in CARPETAS_CANDIDATAS) + ")")
-    parser.add_argument("--omitir-hash", action="store_true",
-                        help="no exige que los CSV tengan el SHA-256 del equipo")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="hace todo menos escribir en la base de datos",
+    )
+    parser.add_argument(
+        "--raw-dir",
+        type=Path,
+        default=None,
+        help="carpeta con los CSV (por defecto se busca en "
+        + " y en ".join(str(c) for c in CARPETAS_CANDIDATAS)
+        + ")",
+    )
+    parser.add_argument(
+        "--omitir-hash",
+        action="store_true",
+        help="no exige que los CSV tengan el SHA-256 del equipo",
+    )
     args = parser.parse_args()
 
     raw_dir = carpeta_raw(args.raw_dir)
@@ -116,25 +163,40 @@ def main():
     try:
         dims = cargar_dimensiones(session)
         if not dims.usuarios or not dims.comercios:
-            sys.exit("El seed no ha creado usuarios con dispositivo o comercios activos. "
-                     "Corre primero: uv run python -m securepay_seed.seed")
-        print(f"  {len(dims.usuarios):,} usuarios con dispositivo propio, "
-              f"{len(dims.comercios):,} comercios activos")
+            sys.exit(
+                "El seed no ha creado usuarios con dispositivo o comercios activos. "
+                "Corre primero: uv run python -m securepay_seed.seed"
+            )
+        print(
+            f"  {len(dims.usuarios):,} usuarios con dispositivo propio, "
+            f"{len(dims.comercios):,} comercios activos"
+        )
 
-        print("\n3/4 Extrayendo y transformando (PaySim tiene 6,3 millones de filas; tarda un poco)...")
-        paysim = muestrear_paysim(raw_dir / PAYSIM_ARCHIVO, PAYSIM_FILAS, PAYSIM_FRAUDE_PCT)
-        fraudtest = muestrear_fraudtest(raw_dir / FRAUDTEST_ARCHIVO, FRAUDTEST_FILAS, FRAUDTEST_FRAUDE_PCT)
+        print(
+            "\n3/4 Extrayendo y transformando (PaySim tiene 6,3 millones de filas; tarda un poco)..."
+        )
+        paysim = muestrear_paysim(
+            raw_dir / PAYSIM_ARCHIVO, PAYSIM_FILAS, PAYSIM_FRAUDE_PCT
+        )
+        fraudtest = muestrear_fraudtest(
+            raw_dir / FRAUDTEST_ARCHIVO, FRAUDTEST_FILAS, FRAUDTEST_FRAUDE_PCT
+        )
         reporte_extraccion(paysim)
         reporte_extraccion(fraudtest)
 
-        lotes = [transformar_paysim(paysim.filas, dims), transformar_fraudtest(fraudtest.filas, dims)]
+        lotes = [
+            transformar_paysim(paysim.filas, dims),
+            transformar_fraudtest(fraudtest.filas, dims),
+        ]
         for lote in lotes:
             reporte_transformacion(lote)
 
         filas = [f for lote in lotes for f in lote.filas]
         print(f"\nHuella SHA-256 del lote ({len(filas):,} filas): {huella(filas)}")
-        print("Si tus compañeros usan los mismos CSV, el mismo seed y la misma semilla, "
-              "deben ver esta misma huella.")
+        print(
+            "Si tus compañeros usan los mismos CSV, el mismo seed y la misma semilla, "
+            "deben ver esta misma huella."
+        )
 
         if args.dry_run:
             print("\n4/4 --dry-run: no se escribió nada en la base de datos.")

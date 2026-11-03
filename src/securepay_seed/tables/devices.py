@@ -3,9 +3,9 @@ import uuid
 from datetime import timedelta
 
 from faker import Faker
+from securepay_shared.models import Dispositivo, DispositivoCuenta
 from sqlalchemy.dialects.postgresql import insert
 
-from securepay_shared.models import Dispositivo, DispositivoCuenta
 from securepay_seed.config import FECHA_REFERENCIA, PATRONES_COMPARTIDOS
 from securepay_seed.fechas import fecha_hora_entre
 
@@ -34,16 +34,20 @@ def generar_dispositivos(
         n = random.randint(1, dispositivos_por_usuario)
         for j in range(n):
             dev_id = uuid.uuid5(NAMESPACE, f"device:{u['id']}:{j}")
-            dispositivos.append({
-                "id": dev_id,
-                "user_id": u["id"],
-                "device_fingerprint": str(uuid.uuid5(NAMESPACE, f"fp:{u['id']}:{j}")),
-                "user_agent": user_agent(fake),
-                "ip": fake.ipv4(),
-                "fecha_asociacion": fecha_hora_entre(
-                    fake.random, u["fecha_registro"], FECHA_REFERENCIA
-                ),
-            })
+            dispositivos.append(
+                {
+                    "id": dev_id,
+                    "user_id": u["id"],
+                    "device_fingerprint": str(
+                        uuid.uuid5(NAMESPACE, f"fp:{u['id']}:{j}")
+                    ),
+                    "user_agent": user_agent(fake),
+                    "ip": fake.ipv4(),
+                    "fecha_asociacion": fecha_hora_entre(
+                        fake.random, u["fecha_registro"], FECHA_REFERENCIA
+                    ),
+                }
+            )
 
     # Cada dispositivo normal queda asociado a la cuenta de su dueño.
     cuenta_por_usuario = {c["user_id"]: c for c in cuentas}
@@ -63,19 +67,25 @@ def generar_dispositivos(
     asociaciones += asociaciones_compartidas
 
     for d in dispositivos:
-        stmt = insert(Dispositivo).values(**d).on_conflict_do_nothing(
-            index_elements=["device_fingerprint"]
+        stmt = (
+            insert(Dispositivo)
+            .values(**d)
+            .on_conflict_do_nothing(index_elements=["device_fingerprint"])
         )
         session.execute(stmt)
 
     for a in asociaciones:
-        stmt = insert(DispositivoCuenta).values(**a).on_conflict_do_nothing(
-            index_elements=["dispositivo_id", "cuenta_id"]
+        stmt = (
+            insert(DispositivoCuenta)
+            .values(**a)
+            .on_conflict_do_nothing(index_elements=["dispositivo_id", "cuenta_id"])
         )
         session.execute(stmt)
 
     session.commit()
-    print(f"  {len(dispositivos)} dispositivos generados ({len(compartidos)} compartidos)")
+    print(
+        f"  {len(dispositivos)} dispositivos generados ({len(compartidos)} compartidos)"
+    )
     print(f"  {len(asociaciones)} asociaciones dispositivo-cuenta generadas")
     return dispositivos
 
@@ -91,7 +101,8 @@ def generar_compartidos(fake, cuentas, cantidad):
     # ninguna asociación quede antes de que exista la cuenta.
     dias_max = max(p["dias"] for p in PATRONES_COMPARTIDOS)
     candidatas = [
-        c for c in cuentas
+        c
+        for c in cuentas
         if c["estado"] == "activa"
         and c["fecha_apertura"] < referencia - timedelta(days=dias_max)
     ]
@@ -112,27 +123,30 @@ def generar_compartidos(fake, cuentas, cantidad):
         # referencia, para no caer justo en el borde de la ventana.
         tramo = (patron["dias"] - 2) / (patron["cuentas"] - 1)
         fechas = [
-            referencia - timedelta(days=1 + i * tramo)
-            for i in range(patron["cuentas"])
+            referencia - timedelta(days=1 + i * tramo) for i in range(patron["cuentas"])
         ]
 
         # El dueño (opción A: dispositivos.user_id se mantiene) es la
         # cuenta que lo usó primero, la de la fecha más antigua.
         dev_id = uuid.uuid5(NAMESPACE, f"shared_device:{k}")
-        dispositivos.append({
-            "id": dev_id,
-            "user_id": elegidas[-1]["user_id"],
-            "device_fingerprint": str(uuid.uuid5(NAMESPACE, f"fp:shared:{k}")),
-            "user_agent": user_agent(fake),
-            "ip": fake.ipv4(),
-            "fecha_asociacion": fechas[-1],
-        })
+        dispositivos.append(
+            {
+                "id": dev_id,
+                "user_id": elegidas[-1]["user_id"],
+                "device_fingerprint": str(uuid.uuid5(NAMESPACE, f"fp:shared:{k}")),
+                "user_agent": user_agent(fake),
+                "ip": fake.ipv4(),
+                "fecha_asociacion": fechas[-1],
+            }
+        )
 
-        for cuenta, fecha in zip(elegidas, fechas):
-            asociaciones.append({
-                "dispositivo_id": dev_id,
-                "cuenta_id": cuenta["id"],
-                "fecha_asociacion": fecha,
-            })
+        for cuenta, fecha in zip(elegidas, fechas, strict=False):
+            asociaciones.append(
+                {
+                    "dispositivo_id": dev_id,
+                    "cuenta_id": cuenta["id"],
+                    "fecha_asociacion": fecha,
+                }
+            )
 
     return dispositivos, asociaciones

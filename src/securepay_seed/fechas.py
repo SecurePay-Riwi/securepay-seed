@@ -6,13 +6,13 @@ y desde ahí se corre todo el azar del seed. Aquí siempre se sortean
 segundos (o días) enteros.
 """
 
-from datetime import timedelta, timezone
+from datetime import UTC, timedelta
 
 
 def _sin_zona(fecha):
     # Las columnas guardan la hora UTC sin zona horaria.
     if fecha.tzinfo is not None:
-        fecha = fecha.astimezone(timezone.utc).replace(tzinfo=None)
+        fecha = fecha.astimezone(UTC).replace(tzinfo=None)
     return fecha
 
 

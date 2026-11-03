@@ -23,8 +23,12 @@ def test_una_persona_por_linea_ordenada_por_documento():
 
     lineas = a_jsonl(filas).splitlines()
 
-    assert [json.loads(l) for l in lineas] == [
-        {"documento": "1000000016", "tipo": "sanciones", "fecha_inclusion": "2023-04-11"},
+    assert [json.loads(linea) for linea in lineas] == [
+        {
+            "documento": "1000000016",
+            "tipo": "sanciones",
+            "fecha_inclusion": "2023-04-11",
+        },
         {"documento": "10000005", "tipo": "PEP", "fecha_inclusion": "2022-01-30"},
     ]
 
