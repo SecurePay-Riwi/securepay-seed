@@ -44,6 +44,9 @@ uv run python -m securepay_seed.kaggle_etl.etl
 # Dry run: show what the ETL would do without writing anything
 uv run python -m securepay_seed.kaggle_etl.etl --dry-run
 
+# Read the CSVs from the data lake instead of a folder (how it runs in AWS)
+uv run python -m securepay_seed.kaggle_etl.etl --raw-dir s3://<bucket>/raw/kaggle
+
 # Run the tests (no database or CSVs needed)
 uv run pytest
 ```
@@ -54,6 +57,12 @@ The ETL looks for both CSVs, in this order, in `src/securepay_seed/kaggle_etl/ra
 in `KAGGLE_DOWNLOAD_DIR` (default `data/kaggle/`) and in
 `../securepay-csv/data/kaggle/`, where **securepay-csv** downloads them. All of
 them are Git-ignored.
+
+With `--raw-dir` (or `HIST_RAW_DIR`) set to `s3://<bucket>/raw/kaggle`, the ETL
+first downloads `paysim/paysim.csv` and `sparkov/fraudtest/fraudTest.csv` from
+that prefix (the keys securepay-csv's loader writes) to a temporary folder,
+then runs as usual. SecurePay's dev environment runs it this way in the admin
+task, after the seed.
 
 | File | Dataset |
 |------|---------|
