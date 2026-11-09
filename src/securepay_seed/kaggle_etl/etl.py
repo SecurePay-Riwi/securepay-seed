@@ -10,6 +10,7 @@ tabla transacciones. Es idempotente: correrlo otra vez no duplica nada.
 """
 
 import argparse
+import os
 import sys
 from collections import Counter
 from pathlib import Path
@@ -37,6 +38,7 @@ from securepay_seed.kaggle_etl.load import (
     contar_transacciones,
     insertar,
 )
+from securepay_seed.kaggle_etl.s3 import download, is_s3
 from securepay_seed.kaggle_etl.transform import (
     huella,
     transformar_fraudtest,
@@ -132,6 +134,16 @@ def reporte_transformacion(lote):
         )
 
 
+def resolver_raw(pedida=None, descargar=download):
+    """Carpeta de los CSV. Si se pide s3:// (--raw-dir o HIST_RAW_DIR), los
+    baja primero a una carpeta temporal: así corre el ETL en AWS."""
+    pedida = pedida or os.getenv("HIST_RAW_DIR")
+    if pedida and is_s3(pedida):
+        print(f"0/4 Bajando los CSV de {pedida} ...")
+        return descargar(pedida)
+    return carpeta_raw(Path(pedida) if pedida else None)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument(
@@ -141,9 +153,9 @@ def main():
     )
     parser.add_argument(
         "--raw-dir",
-        type=Path,
         default=None,
-        help="carpeta con los CSV (por defecto se busca en "
+        help="carpeta con los CSV, o s3://<bucket>/raw/kaggle para bajarlos "
+        "del lago de datos (por defecto se busca en "
         + " y en ".join(str(c) for c in CARPETAS_CANDIDATAS)
         + ")",
     )
@@ -154,7 +166,7 @@ def main():
     )
     args = parser.parse_args()
 
-    raw_dir = carpeta_raw(args.raw_dir)
+    raw_dir = resolver_raw(args.raw_dir)
     print(f"1/4 Verificando los CSV en {raw_dir} ...")
     verificar_archivos(raw_dir, args.omitir_hash)
 

@@ -22,6 +22,7 @@ uv run ruff format .    # format (CI checks it)
 uv run ruff check .     # lint (CI checks it)
 uv run python -m securepay_seed.seed                 # seed (needs PostgreSQL)
 uv run python -m securepay_seed.kaggle_etl.etl --dry-run
+uv run python -m securepay_seed.kaggle_etl.etl --raw-dir s3://<bucket>/raw/kaggle  # CSVs from S3 (AWS)
 ```
 
 ## Structure rules (mandatory)
